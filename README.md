@@ -6,7 +6,8 @@ By team 89-09: Ignacio Arnaiz Tierraseca, Luis Daniel Casais Mezquida & Juan Del
 This lab allows the student to familiarize with the services for process management that are provided by POSIX. Moreover, one of the objectives is to understand how a Shell works in UNIX/Linux. In summary, a shell allows the user to communicate with the kernel of the Operating System using simple or chained commands.<br/>
 For the management of processes, you will use the POSIX system calls such as fork, wait, exit. For process communication pipe, dup, close and signal system calls.<br/>
 The student must design and implement, in C language and over the UNIX/Linux Operating System, a program that acts like a shell.<br/>
-<br/>
+
+## Parser
 For the development of this lab, a parser is given to the student. This parser can read the commands introduced by the user. The student should only work to create a command interpreter. The syntax used by the parser is the following:
 * A **space** is a space or a tab.
 * A **separator** is a character with a special meaning (| , < , > , & ), a new line or the end of
