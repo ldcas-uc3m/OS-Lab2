@@ -102,10 +102,10 @@ int main(int argc, char* argv[])
               /************************ STUDENTS CODE ********************************/
 	      if (command_counter > 0) {
                 if (command_counter > MAX_COMMANDS)
-                      printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
+                    printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
                 else {
-            	   // Print command
-		   print_command(argvv, filev, in_background);
+            	    // Print command
+		            print_command(argvv, filev, in_background);
                 }
               }
         }
