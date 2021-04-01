@@ -1,4 +1,5 @@
 .vscode/
 msh
+msh.o
 a.out
 a.exe
