@@ -117,11 +117,15 @@ int main(int argc, char* argv[])
                     case 0:
                         /* child process */
                         execvp(argvv[0][0], argvv[0]); //execute the comand
+                        exit(0);
                         break;
                     default:
                         /* parent */
-                        while (wait(&status) != pid){}
-                        
+                        while (wait(&status) != pid){
+                            if (status != 0){
+                                perror("Error executing the child");
+                            }
+                        }
                         break;
                     }
                 }
