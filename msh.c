@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
             	    // Print command
 		            //print_command(argvv, filev, in_background);
                     
-                    pid = fork();
+                    int pid = fork();
 
                     switch (pid){
                     case -1:
@@ -116,9 +116,12 @@ int main(int argc, char* argv[])
                         return -1;
                     case 0:
                         /* child process */
-                        execvp(argvv[0], argv);
+                        execvp(argvv[0][0], argv);
                         break;
                     default:
+                        /* parent */
+                        while (wait(&status) != pid){}
+                        
                         break;
                     }
                 }
