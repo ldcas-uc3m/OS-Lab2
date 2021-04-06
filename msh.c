@@ -105,7 +105,22 @@ int main(int argc, char* argv[])
                     printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
                 else {
             	    // Print command
-		            print_command(argvv, filev, in_background);
+		            //print_command(argvv, filev, in_background);
+                    
+                    pid = fork();
+
+                    switch (pid){
+                    case -1:
+                        /* error */
+                        perror("Error in fork");
+                        return -1;
+                    case 0:
+                        /* child process */
+                        execvp(argvv[0], argv);
+                        break;
+                    default:
+                        break;
+                    }
                 }
               }
         }
