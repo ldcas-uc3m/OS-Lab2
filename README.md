@@ -108,7 +108,7 @@ In order to compile and run the code, it’s mandatory to link the shared librar
 1. Create a directory in your preferred folder and remember the path.
 2. Unzip the initial code in path.
 3. Compile or clean:
-    1. With the command make you can compile your code.
-    2. With the command make clean the generated files will be deleted.
+    1. With the command `$ make` you can compile your code.
+    2. With the command `$ make clean` the generated files will be deleted.
 4. Run the minishell. If there is an error because the library is not found:<br/>
 `$ export LD_LIBRARY_PATH=/home/<username>/<path>:$LD_LIBRARY_PATH`, and run the minishell again.
