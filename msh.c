@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
                         return -1;
                     case 0:
                         /* child process */
-                        execvp(argvv[0][0], argv);
+                        execvp(argvv[0][0], argvv[0]); //execute the comand
                         break;
                     default:
                         /* parent */
