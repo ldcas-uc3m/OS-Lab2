@@ -121,9 +121,11 @@ int main(int argc, char* argv[])
                         break;
                     default:
                         /* parent */
-                        while (wait(&status) != pid){
-                            if (status != 0){
-                                perror("Error executing the child");
+                        if (argvv[1][0] != "&"){
+                            while (wait(&status) != pid){
+                                if (status != 0){
+                                    perror("Error executing the child");
+                                }
                             }
                         }
                         break;
