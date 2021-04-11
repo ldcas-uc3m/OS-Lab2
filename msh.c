@@ -47,6 +47,71 @@ void getCompleteCommand(char*** argvv, int num_command) {
         argv_execvp[i] = argvv[num_command][i];
 }
 
+void mycalc(char ***argvv){
+	/* Check if the command is mycalc */
+
+  
+	if (strcmp(argvv[0][0], "mycalc") == 0){
+		/* Check if the input command is composed by operand1 add/mod and operand 2 */
+  
+
+		if (argvv[0][1] != NULL && argvv[0][2] != NULL && argvv[0][3] != NULL){
+			
+			/* Get the operands */
+			int op1;
+			int op2;
+			op1 = atoi(argvv[0][1]);
+			op2 = atoi(argvv[0][3]);
+			
+			/* If add define the accumulator and show the result in the standard error output */
+			if (strcmp(argvv[0][2],"add")==0){
+				int accum = accum + op1 + op2 ;
+        int add = op1 + op2;
+				char buf_add[50];
+				sprintf(buf_add, "[OK] %d + %d = %d Acc %d\n", op1, op2, add, accum);
+				
+				/* Write in standard output error and if there is an error show the error */
+				if (write(2, buf_add, strlen(buf_add)) < strlen(buf_add)){
+					perror("Error in write\n");
+				}
+
+			}
+			
+			/* If mod calculate the remainider the quotient and show the result in the standard error output */
+			if (strcmp(argvv[0][2],"mod")==0){
+				int rem = op1 % op2;
+				int quo = op1 / op2;
+				char buf_mod[50];
+				sprintf(buf_mod, "[OK] %d %% %d = %d * %d + %d\n", op1, op2, op2, quo, rem);
+				
+				/* Write in standard output error and if there is an error show the error */
+				if (write(2, buf_mod, strlen(buf_mod)) < strlen(buf_mod)){
+					perror("Error in write\n");
+				}
+			}
+			
+			/* If the input does not follow the the structure show the error in the standard output */
+			else{
+				/* Write in standard output and if there is an error show the error */
+				if (write(1,"[ERROR] The structure of the command is <operand 1> <add/mod> <operand 2>\n", strlen("[ERROR] The structure of the command is <operand 1> <add/mod> <operand 2>\n")) < strlen("[ERROR] The structure of the command is <operand 1> <add/mod> <operand 2>\n")){
+					perror("Error in write\n");
+				}
+			}
+			
+		} 
+		
+		/* If the input does not follow the the structure show the error in the standard output */
+		else{
+			/* Write in standard output and if there is an error show the error */
+			if (write(1,"[ERROR] The structure of the command is <operand 1> <add/mod> <operand 2>\n", strlen("[ERROR] The structure of the command is <operand 1> <add/mod> <operand 2>\n")) < strlen("[ERROR] The structure of the command is <operand 1> <add/mod> <operand 2>\n")){
+				perror("Error in write\n");
+			}
+		}
+	}
+                    
+}
+
+
 
 /**
  * Main sheell  Loop  
@@ -80,7 +145,7 @@ int main(int argc, char* argv[])
 	while (1) 
 	{
 		int status = 0;
-	        int command_counter = 0;
+	    int command_counter = 0;
 		int in_background = 0;
 		signal(SIGINT, siginthandler);
 
@@ -100,38 +165,119 @@ int main(int argc, char* argv[])
 
 
               /************************ STUDENTS CODE ********************************/
-	      if (command_counter > 0) {
+	        if (command_counter > 0) {
                 if (command_counter > MAX_COMMANDS)
                     printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
                 else {
             	    // Print command
-		            //print_command(argvv, filev, in_background);
-                    
-                    int pid = fork();
+      
+                    char*  pCmd = NULL;
+                    char*  p1;
+                    char*  p2;
+                    struct stat fileOrg;
+                    int    existOrg;
+                    int    pid  = fork();
 
                     switch (pid){
+                    
                     case -1:
                         /* error */
                         perror("Error in fork");
                         return -1;
+
                     case 0:
                         /* child process */
-                        execvp(argvv[0][0], argvv[0]); //execute the comand
-                        exit(0);
-                        break;
+
+                        // TODO: prepare errors
+
+                        /* REDIRECTION */
+                        if (filev[0][0] != '0'){
+                            /* file[0] as stdin */
+                            close(STDIN_FILENO); // free file desc. 0
+                            int fd = open(filev[0], O_RDONLY); // fd is now 0
+                        }
+
+                        if (filev[1][0] != '0'){
+                            /* file[1] as stdout */
+                            close(STDOUT_FILENO);
+                            int fd = open(filev[1], O_CREAT | O_WRONLY, S_IRWXU);                          
+                        }
+
+                        if (filev[2][0] != '0'){
+                            /* file[1] as stderr */
+                            close(STDERR_FILENO);
+                            int fd = open(filev[1], O_CREAT | O_WRONLY, S_IRWXU);                          
+                        }
+
+                        /* INTERNAL COMMANDS */
+                       
+                        pCmd = argvv[0][0]; // first command
+                        //printf("CMD: %s\n",pCmd);
+                        
+                        if (strcmp(pCmd,"mycp") == 0)
+                           { /* execute mycpy */
+
+                             p1  = argvv[0][1];
+                             p2  = argvv[0][2];        
+                             
+                             //printf("P1:  %s\n",p1);
+                             //printf("P2:  %s\n",p2);
+
+                             if (p1 == NULL || p2 == NULL)
+                                {
+                                  //printf("The structure of the comand is mycpy <original file> <copied file>\n");
+                                  write(1,"[ERROR] The structure of the comand is mycpy <original file> <copied file>\n", strlen("[ERROR] The structure of the comand is mycpy <original file> <copied file>\n"));
+                                }
+                             else
+                                {
+                                  existOrg = stat(p1,&fileOrg);
+                                  
+                                  if (existOrg==-1)
+                                     {
+                                       //printf("Error opening Original file: No such file or directory\n");
+                                       write(1,"[ERROR] Error opening Original file: No such file or directory\n", strlen("[ERROR] Error opening Original file: No such file or directory\n"));
+                                     }
+                                  else
+                                     {
+                                      char buff[50];
+                                      sprintf(buff,"[OK] Copy has been successfull between %s and %s\n",p1,p2);
+                                      write(1,buff, strlen(buff));
+                                      execvp("cp", argvv[0]); 
+                                     }
+                                }
+                          }
+
+                          else if (strcmp(pCmd, "mycalc") == 0)
+                              { /* execute mycalc */
+                                //printf("MI mycalc\n");
+                                mycalc(argvv);
+                              }
+
+                            else{
+                               /* COMMAND EXECUTION */
+                                getCompleteCommand(argvv, command_counter);
+                                execvp(argvv[0][0], argvv[0]); //execute the comand
+                                exit(0);
+                                break;
+                            }
+
                     default:
-                        /* parent */
-                        if (argvv[1][0] != "&"){
+                        /* parent process */
+                        /* BACKGROUND */
+                        if (in_background != 1){
                             while (wait(&status) != pid){
                                 if (status != 0){
                                     perror("Error executing the child");
                                 }
                             }
                         }
+
                         break;
                     }
+                   
                 }
               }
         }
 	return 0;
 }
+
