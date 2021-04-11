@@ -47,6 +47,71 @@ void getCompleteCommand(char*** argvv, int num_command) {
         argv_execvp[i] = argvv[num_command][i];
 }
 
+void mycalc(char ***argvv){
+	/* Check if the command is mycalc */
+
+  
+	if (strcmp(argvv[0][0], "mycalc") == 0){
+		/* Check if the input command is composed by operand1 add/mod and operand 2 */
+  
+
+		if (argvv[0][1] != NULL && argvv[0][2] != NULL && argvv[0][3] != NULL){
+			
+			/* Get the operands */
+			int op1;
+			int op2;
+			op1 = atoi(argvv[0][1]);
+			op2 = atoi(argvv[0][3]);
+			
+			/* If add define the accumulator and show the result in the standard error output */
+			if (strcmp(argvv[0][2],"add")==0){
+				int accum = accum + op1 + op2 ;
+        int add = op1 + op2;
+				char buf_add[50];
+				sprintf(buf_add, "[OK] %d + %d = %d Acc %d\n", op1, op2, add, accum);
+				
+				/* Write in standard output error and if there is an error show the error */
+				if (write(2, buf_add, strlen(buf_add)) < strlen(buf_add)){
+					perror("Error in write\n");
+				}
+
+			}
+			
+			/* If mod calculate the remainider the quotient and show the result in the standard error output */
+			if (strcmp(argvv[0][2],"mod")==0){
+				int rem = op1 % op2;
+				int quo = op1 / op2;
+				char buf_mod[50];
+				sprintf(buf_mod, "[OK] %d %% %d = %d * %d + %d\n", op1, op2, op2, quo, rem);
+				
+				/* Write in standard output error and if there is an error show the error */
+				if (write(2, buf_mod, strlen(buf_mod)) < strlen(buf_mod)){
+					perror("Error in write\n");
+				}
+			}
+			
+			/* If the input does not follow the the structure show the error in the standard output */
+			else{
+				/* Write in standard output and if there is an error show the error */
+				if (write(1,"[ERROR] The structure of the command is <operand 1> <add/mod> <operand 2>\n", strlen("[ERROR] The structure of the command is <operand 1> <add/mod> <operand 2>\n")) < strlen("[ERROR] The structure of the command is <operand 1> <add/mod> <operand 2>\n")){
+					perror("Error in write\n");
+				}
+			}
+			
+		} 
+		
+		/* If the input does not follow the the structure show the error in the standard output */
+		else{
+			/* Write in standard output and if there is an error show the error */
+			if (write(1,"[ERROR] The structure of the command is <operand 1> <add/mod> <operand 2>\n", strlen("[ERROR] The structure of the command is <operand 1> <add/mod> <operand 2>\n")) < strlen("[ERROR] The structure of the command is <operand 1> <add/mod> <operand 2>\n")){
+				perror("Error in write\n");
+			}
+		}
+	}
+                    
+}
+
+
 
 /**
  * Main sheell  Loop  
@@ -80,7 +145,7 @@ int main(int argc, char* argv[])
 	while (1) 
 	{
 		int status = 0;
-	        int command_counter = 0;
+	    int command_counter = 0;
 		int in_background = 0;
 		signal(SIGINT, siginthandler);
 
@@ -100,7 +165,7 @@ int main(int argc, char* argv[])
 
 
               /************************ STUDENTS CODE ********************************/
-	       if (command_counter > 0) {
+	      if (command_counter > 0) {
                 if (command_counter > MAX_COMMANDS)
                     printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
                 else {
@@ -141,7 +206,8 @@ int main(int argc, char* argv[])
 
                              if ( p1==NULL || p2==NULL)
                                 {
-                                  printf("The structure of the comand is mycpy <original file> <copied file>\n");
+                                  //printf("The structure of the comand is mycpy <original file> <copied file>\n");
+                                  write(1,"[ERROR] The structure of the comand is mycpy <original file> <copied file>\n", strlen("[ERROR] The structure of the comand is mycpy <original file> <copied file>\n"));
                                 }
                              else
                                 {
@@ -149,11 +215,14 @@ int main(int argc, char* argv[])
                                   
                                   if (existOrg==-1)
                                      {
-                                       printf("Error opening Original file: No such file or directory\n");
+                                       //printf("Error opening Original file: No such file or directory\n");
+                                       write(1,"[ERROR] Error opening Original file: No such file or directory\n", strlen("[ERROR] Error opening Original file: No such file or directory\n"));
                                      }
                                   else
                                      {
-                                      printf("Command executed\n");
+                                      char buff[50];
+                                      sprintf(buff,"[OK] Copy has been successfull between %s and %s\n",p1,p2);
+                                      write(1,buff, strlen(buff));
                                       execvp("cp", argvv[0]); 
                                      }
                                 }
@@ -161,7 +230,8 @@ int main(int argc, char* argv[])
 
                        else if ( strcmp(pCmd,"mycalc")==0 )
                           { /* execute mycalc */
-                            printf("MI mycalc\n");
+                            //printf("MI mycalc\n");
+			                      mycalc(argvv);
                           }
 
 
@@ -184,8 +254,10 @@ int main(int argc, char* argv[])
                         }
                         break;
                     }
+                   
                 }
               }
         }
 	return 0;
 }
+
