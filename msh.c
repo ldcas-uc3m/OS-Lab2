@@ -16,6 +16,7 @@
 
 #define MAX_COMMANDS 8
 
+// export LD_LIBRARY_PATH=/home/ldcas/Documents/GitHub/OS-Lab2/msh.c:$LD_LIBRARY_PATH
 
 // ficheros por si hay redirección
 char filev[3][64];
@@ -229,7 +230,7 @@ int main(int argc, char* argv[])
                                 mycp(argvv);
                             }
 
-                            else if (strcmp(pCmd, "mycalc") == 0){}
+                            else if (strcmp(pCmd, "mycalc") == 0){
                                 /* execute mycalc */
                                 mycalc(argvv);
                             }
