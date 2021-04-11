@@ -18,6 +18,8 @@
 
 // export LD_LIBRARY_PATH=/home/ldcas/Documents/GitHub/OS-Lab2/msh.c:$LD_LIBRARY_PATH
 
+int accum = 0; // accumulation of mycalc
+
 // ficheros por si hay redirección
 char filev[3][64];
 
@@ -61,8 +63,8 @@ void mycalc(char ***argvv){
 			
 			/* If add define the accumulator and show the result in the standard error output */
 			if (strcmp(argvv[0][2],"add")==0){
-				int accum = accum + op1 + op2 ;
                 int add = op1 + op2;
+                accum += add;
 				char buf_add[50];
 				sprintf(buf_add, "[OK] %d + %d = %d Acc %d\n", op1, op2, add, accum);
 				
@@ -73,7 +75,7 @@ void mycalc(char ***argvv){
 			}
 			
 			/* If mod calculate the remainider the quotient and show the result in the standard error output */
-			if (strcmp(argvv[0][2],"mod")==0){
+			else if (strcmp(argvv[0][2],"mod")==0){
 				int rem = op1 % op2;
 				int quo = op1 / op2;
 				char buf_mod[50];
@@ -92,9 +94,7 @@ void mycalc(char ***argvv){
 					perror("Error in write\n");
 				}
 			}
-			
 		} 
-		
 		/* If the input does not follow the the structure show the error in the standard output */
 		else{
 			/* Write in standard output and if there is an error show the error */
@@ -224,7 +224,6 @@ int main(int argc, char* argv[])
                             /* INTERNAL COMMANDS */
                         
                             char* pCmd = argvv[0][0]; // internal command is first command
-                            //printf("CMD: %s\n",pCmd);
                             
                             if (strcmp(pCmd,"mycp") == 0){
                                 /* execute mycpy */
