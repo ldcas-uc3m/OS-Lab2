@@ -165,12 +165,11 @@ int main(int argc, char* argv[])
 
 
               /************************ STUDENTS CODE ********************************/
-	      if (command_counter > 0) {
+	        if (command_counter > 0) {
                 if (command_counter > MAX_COMMANDS)
                     printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
                 else {
             	    // Print command
-		            //print_command(argvv, filev, in_background);
       
                     char*  pCmd = NULL;
                     char*  p1;
@@ -185,17 +184,37 @@ int main(int argc, char* argv[])
                         /* error */
                         perror("Error in fork");
                         return -1;
-                        break;
 
                     case 0:
                         /* child process */
 
-                        /* execvp(argvv[0][0], argvv[0]); //execute the comand */
+                        // TODO: prepare errors
+
+                        /* REDIRECTION */
+                        if (filev[0][0] != '0'){
+                            /* file[0] as stdin */
+                            close(STDIN_FILENO); // free file desc. 0
+                            int fd = open(filev[0], O_RDONLY); // fd is now 0
+                        }
+
+                        if (filev[1][0] != '0'){
+                            /* file[1] as stdout */
+                            close(STDOUT_FILENO);
+                            int fd = open(filev[1], O_CREAT | O_WRONLY, S_IRWXU);                          
+                        }
+
+                        if (filev[2][0] != '0'){
+                            /* file[1] as stderr */
+                            close(STDERR_FILENO);
+                            int fd = open(filev[1], O_CREAT | O_WRONLY, S_IRWXU);                          
+                        }
+
+                        /* INTERNAL COMMANDS */
                        
-                        pCmd = argvv[0][0];
+                        pCmd = argvv[0][0]; // first command
                         //printf("CMD: %s\n",pCmd);
                         
-                        if ( strcmp(pCmd,"mycp")==0 )
+                        if (strcmp(pCmd,"mycp") == 0)
                            { /* execute mycpy */
 
                              p1  = argvv[0][1];
@@ -204,7 +223,7 @@ int main(int argc, char* argv[])
                              //printf("P1:  %s\n",p1);
                              //printf("P2:  %s\n",p2);
 
-                             if ( p1==NULL || p2==NULL)
+                             if (p1 == NULL || p2 == NULL)
                                 {
                                   //printf("The structure of the comand is mycpy <original file> <copied file>\n");
                                   write(1,"[ERROR] The structure of the comand is mycpy <original file> <copied file>\n", strlen("[ERROR] The structure of the comand is mycpy <original file> <copied file>\n"));
@@ -228,30 +247,31 @@ int main(int argc, char* argv[])
                                 }
                           }
 
-                       else if ( strcmp(pCmd,"mycalc")==0 )
-                          { /* execute mycalc */
-                            //printf("MI mycalc\n");
-			                      mycalc(argvv);
-                          }
+                          else if (strcmp(pCmd, "mycalc") == 0)
+                              { /* execute mycalc */
+                                //printf("MI mycalc\n");
+                                mycalc(argvv);
+                              }
 
-
-                        else
-                           { /* execute the comand */
-                             execvp(argvv[0][0], argvv[0]); 
-                           }
-
-                          exit(0);
-                          break;
+                            else{
+                               /* COMMAND EXECUTION */
+                                getCompleteCommand(argvv, command_counter);
+                                execvp(argvv[0][0], argvv[0]); //execute the comand
+                                exit(0);
+                                break;
+                            }
 
                     default:
-                        /* parent */
-                        if (argvv[1][0] != "&"){
+                        /* parent process */
+                        /* BACKGROUND */
+                        if (in_background != 1){
                             while (wait(&status) != pid){
                                 if (status != 0){
                                     perror("Error executing the child");
                                 }
                             }
                         }
+
                         break;
                     }
                    
