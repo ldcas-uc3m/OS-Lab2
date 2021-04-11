@@ -100,13 +100,13 @@ int main(int argc, char* argv[])
 
 
               /************************ STUDENTS CODE ********************************/
-	      if (command_counter > 0) {
+	        if (command_counter > 0) {
                 if (command_counter > MAX_COMMANDS)
                     printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
                 else {
             	    // Print command
 		            //print_command(argvv, filev, in_background);
-                    
+
                     int pid = fork();
 
                     switch (pid){
@@ -114,20 +114,47 @@ int main(int argc, char* argv[])
                         /* error */
                         perror("Error in fork");
                         return -1;
+
                     case 0:
                         /* child process */
+
+                        // TODO: prepare errors
+
+                        /* REDIRECTION */
+                        if (filev[0][0] != '0'){
+                            /* file[0] as stdin */
+                            close(STDIN_FILENO); // free file desc. 0
+                            int fd = open(filev[0], O_RDONLY); // fd is now 0
+                        }
+
+                        if (filev[1][0] != '0'){
+                            /* file[1] as stdout */
+                            close(STDOUT_FILENO);
+                            int fd = open(filev[1], O_CREAT | O_WRONLY, S_IRWXU);                          
+                        }
+
+                        if (filev[2][0] != '0'){
+                            /* file[1] as stderr */
+                            close(STDERR_FILENO);
+                            int fd = open(filev[1], O_CREAT | O_WRONLY, S_IRWXU);                          
+                        }
+
+                        /* COMMAND EXECUTION */
+                        getCompleteCommand(argvv, command_counter);
                         execvp(argvv[0][0], argvv[0]); //execute the comand
                         exit(0);
                         break;
+
                     default:
-                        /* parent */
-                        if (argvv[1][0] != "&"){
+                        /* BACKGROUND */
+                        if (in_background != 1){
                             while (wait(&status) != pid){
                                 if (status != 0){
                                     perror("Error executing the child");
                                 }
                             }
                         }
+
                         break;
                     }
                 }
@@ -135,3 +162,4 @@ int main(int argc, char* argv[])
         }
 	return 0;
 }
+
