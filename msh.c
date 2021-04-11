@@ -103,7 +103,7 @@ void mycalc(char ***argvv){
 			}
 		}
 	}
-                    
+    return;             
 }
 
 void mycp(char ***argvv){
@@ -128,6 +128,7 @@ void mycp(char ***argvv){
             execvp("cp", argvv[0]); 
             }
         }
+    return;
 }
 
 /**
@@ -228,11 +229,13 @@ int main(int argc, char* argv[])
                             if (strcmp(pCmd,"mycp") == 0){
                                 /* execute mycpy */
                                 mycp(argvv);
+                                exit(0);
                             }
 
                             else if (strcmp(pCmd, "mycalc") == 0){
                                 /* execute mycalc */
                                 mycalc(argvv);
+                                exit(0);
                             }
 
                             else{
