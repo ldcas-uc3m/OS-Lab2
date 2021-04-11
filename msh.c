@@ -100,25 +100,79 @@ int main(int argc, char* argv[])
 
 
               /************************ STUDENTS CODE ********************************/
-	      if (command_counter > 0) {
+	       if (command_counter > 0) {
                 if (command_counter > MAX_COMMANDS)
                     printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
                 else {
             	    // Print command
 		            //print_command(argvv, filev, in_background);
-                    
-                    int pid = fork();
+      
+                    char*  pCmd = NULL;
+                    char*  p1;
+                    char*  p2;
+                    struct stat fileOrg;
+                    int    existOrg;
+                    int    pid  = fork();
 
                     switch (pid){
+                    
                     case -1:
                         /* error */
                         perror("Error in fork");
                         return -1;
+                        break;
+
                     case 0:
                         /* child process */
-                        execvp(argvv[0][0], argvv[0]); //execute the comand
-                        exit(0);
-                        break;
+
+                        /* execvp(argvv[0][0], argvv[0]); //execute the comand */
+                       
+                        pCmd = argvv[0][0];
+                        //printf("CMD: %s\n",pCmd);
+                        
+                        if ( strcmp(pCmd,"mycp")==0 )
+                           { /* execute mycpy */
+
+                             p1  = argvv[0][1];
+                             p2  = argvv[0][2];        
+                             
+                             //printf("P1:  %s\n",p1);
+                             //printf("P2:  %s\n",p2);
+
+                             if ( p1==NULL || p2==NULL)
+                                {
+                                  printf("The structure of the comand is mycpy <original file> <copied file>\n");
+                                }
+                             else
+                                {
+                                  existOrg = stat(p1,&fileOrg);
+                                  
+                                  if (existOrg==-1)
+                                     {
+                                       printf("Error opening Original file: No such file or directory\n");
+                                     }
+                                  else
+                                     {
+                                      printf("Command executed\n");
+                                      execvp("cp", argvv[0]); 
+                                     }
+                                }
+                          }
+
+                       else if ( strcmp(pCmd,"mycalc")==0 )
+                          { /* execute mycalc */
+                            printf("MI mycalc\n");
+                          }
+
+
+                        else
+                           { /* execute the comand */
+                             execvp(argvv[0][0], argvv[0]); 
+                           }
+
+                          exit(0);
+                          break;
+
                     default:
                         /* parent */
                         if (argvv[1][0] != "&"){
