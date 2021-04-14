@@ -72,7 +72,7 @@ void mycalc(char ***argvv){
 			}
 			
 			/* If mod calculate the remainider the quotient and show the result in the standard error output */
-			if (strcmp(argvv[0][2],"mod")==0){
+			else if (strcmp(argvv[0][2],"mod")==0){
 				int rem = op1 % op2;
 				int quo = op1 / op2;
 				char buf_mod[50];
@@ -102,7 +102,7 @@ void mycalc(char ***argvv){
 			}
 		}
 	}
-                    
+    return;           
 }
 
 void mycp(char ***argvv){
@@ -125,8 +125,9 @@ void mycp(char ***argvv){
             sprintf(buff,"[OK] Copy has been successfull between %s and %s\n",p1,p2);
             write(1,buff, strlen(buff));
             execvp("cp", argvv[0]); 
-            }
         }
+    }
+    return;
 }
 
 /**
@@ -185,74 +186,129 @@ int main(int argc, char* argv[])
                 if (command_counter > MAX_COMMANDS)
                     printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
                 else {
-
-                    int pid  = fork();
-
-                    switch (pid){
-                    
-                        case -1:
-                            /* error */
-                            perror("Error in fork");
-                            return -1;
-
-                        case 0:
-                            /* child process */
-
-                            // TODO: prepare errors
-
-                            /* REDIRECTION */
-                            if (filev[0][0] != '0'){
-                                /* file[0] as stdin */
-                                close(STDIN_FILENO); // free file desc. 0
-                                int fd = open(filev[0], O_RDONLY); // fd is now 0
+                    /* PIPES */
+                    int pipes[MAX_COMMANDS - 1][2]; // array to save the file descriptors of the pipes
+                    /* creating all needed pipes */
+                    if (command_counter > 1){
+                        for (int j = 0; j < command_counter - 1; j++){
+                            int fd[2];
+                            if (pipe(fd) == 0){
+                                /* save the file descriptors to pipes[][] */
+                                pipes[j][0] = fd[0];
+                                pipes[j][1] = fd[1];
+                            } else{
+                                perror("Error creating the pipe\n");
+                                return;
                             }
+                        }
+                    }
 
-                            if (filev[1][0] != '0'){
-                                /* file[1] as stdout */
-                                close(STDOUT_FILENO);
-                                int fd = open(filev[1], O_CREAT | O_WRONLY, S_IRWXU);                          
-                            }
-
-                            if (filev[2][0] != '0'){
-                                /* file[1] as stderr */
-                                close(STDERR_FILENO);
-                                int fd = open(filev[1], O_CREAT | O_WRONLY, S_IRWXU);                          
-                            }
-
-                            /* INTERNAL COMMANDS */
+                    for (int i = 0; i < command_counter; i++){
                         
-                            char* pCmd = argvv[0][0]; // internal command is first command
-                            //printf("CMD: %s\n",pCmd);
-                            
-                            if (strcmp(pCmd,"mycp") == 0){
-                                /* execute mycpy */
-                                mycp(argvv);
-                            }
+                        int pid  = fork();
 
-                            else if (strcmp(pCmd, "mycalc") == 0){}
-                                /* execute mycalc */
-                                mycalc(argvv);
-                            }
+                        switch (pid){
+                        
+                            case -1:
+                                /* error */
+                                perror("Error in fork");
+                                return -1;
 
-                            else{
-                            /* COMMAND EXECUTION */
-                                getCompleteCommand(argvv, command_counter);
-                                execvp(argvv[0][0], argvv[0]); //execute the comand
-                                exit(0);
-                                break;
-                            }
+                            case 0:
+                                /* child process */
 
-                        default:
-                            /* parent process */
-                            /* BACKGROUND */
-                            if (in_background != 1){
-                                while (wait(&status) != pid){
-                                    if (status != 0){
-                                        perror("Error executing the child");
+                                /* PIPES */
+                                if (command_counter > 1){
+                                    /* */
+                                    switch (i){
+                                    case 0:
+                                        /* first command */
+                                        close(STDOUT_FILENO);
+                                        dup(pipes[0][1]); // stdout is now pipe write
+                                        break;
+                                    case command_counter:
+                                        /* last command */
+                                        close(STDIN_FILENO);
+                                        dup(pipes[command_counter - 1][0]); // stdout is now pipe read
+                                        break;
+
+                                    default:
+                                        close(STDIN_FILENO);
+                                        dup(pipes[i - 1][0]);
+                                        close(STDOUT_FILENO);
+                                        dup(pipes[i - 1][1]);
+                                        break;
                                     }
                                 }
-                            }
-                            break;
+
+                                /* REDIRECTION */
+
+                                // TODO: prepare errors
+                                if (filev[0][0] != '0'){
+                                    /* redirect from input, file[0] as stdin */
+                                    close(STDIN_FILENO); // free file desc. 0
+                                    int fd = open(filev[0], O_RDONLY); // fd is now 0
+                                }
+
+                                if (filev[1][0] != '0'){
+                                    /* redirect to output, file[1] as stdout */
+                                    close(STDOUT_FILENO);
+                                    int fd = open(filev[1], O_CREAT | O_RDWR, S_IRWXU);                          
+                                }
+
+                                if (filev[2][0] != '0'){
+                                    /* redirect error, file[1] as stderr */
+                                    close(STDERR_FILENO);
+                                    int fd = open(filev[2], O_CREAT | O_RDWR, S_IRWXU);                          
+                                }
+
+                                /* INTERNAL COMMANDS */
+                            
+                                char* pCmd = argvv[i][0]; // internal command is current command
+                                
+                                if (strcmp(pCmd,"mycp") == 0){
+                                    /* execute mycpy */
+                                    mycp(argvv);
+                                    exit(0);
+                                }
+
+                                else if (strcmp(pCmd, "mycalc") == 0){
+                                    /* execute mycalc */
+                                    mycalc(argvv);
+                                    exit(0);
+                                }
+
+                                else{
+
+                                /* COMMAND EXECUTION */
+
+                                    getCompleteCommand(argvv, command_counter);
+                                    execvp(argvv[i][0], argvv[0]); //execute the comand
+                                    exit(0);
+                                    break;
+                                }
+
+                            default:
+                                /* parent process */
+                                /* BACKGROUND */
+                                if (in_background != 1){
+                                    while (wait(&status) != pid){ // wait for child to finish
+                                        if (status != 0){
+                                            perror("Error executing the child");
+                                        }
+                                    }
+                                }
+
+                                /* PIPES */
+                                
+                                /* close pipes */
+                                //close(pipes[0, MAX_COMMANDS - 1][0, 1]);
+                                for (int j = 0; j < command_counter - 1; j++){
+                                    close(pipes[j][0]);
+                                    close(pipes[j][1]);
+                                }
+                                break;
+                        }
                     }
                 }
             }
