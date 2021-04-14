@@ -18,9 +18,9 @@ testeo(){
 	 echo -n "0 " >> excel
 	 echo " === test === "
          cat  $1
-	 echo " === salida ./msh  === "
+	 echo " === output ./msh  === "
 	 cat  salida_msh
-	 echo " === salida esperada  === "		
+	 echo " === expected output  === "		
 	 cat  salida_bash
    fi
    rm -f salida* res.txt
@@ -42,9 +42,9 @@ testeobg(){
 	 echo -n "0 " >> excel
 	 echo " === test === "
          cat  $1
-	 echo " === salida ./msh  === "
+	 echo " === output ./msh  === "
 	 cat  salida_m
-	 echo " === salida esperada  === "		
+	 echo " === expected output  === "		
 	 cat  salida_b
    fi
    rm -f salida* res.txt
@@ -64,9 +64,9 @@ testeoRedir(){
 	 echo -n "0 " >> excel
 	 echo " === test === "
          cat  $1
-	 echo " === salida ./msh  === "
+	 echo " === output ./msh  === "
 	 cat  salida_msh
-	 echo " === salida esperada  === "		
+	 echo " === expected output  === "		
 	 cat  salida_bash
    fi
    rm -f salida* res.txt
@@ -86,9 +86,9 @@ testeoRedirError(){
 	 echo -n "0 " >> excel
 	 echo " === test === "
          cat  $1
-	 echo " === salida ./msh  === "
+	 echo " === output ./msh  === "
 	 cat  salida_msh
-	 echo " === salida esperada  === "		
+	 echo " === expected output  === "		
 	 cat  salida_bash
    fi
    rm -f salida* res.txt
@@ -111,9 +111,9 @@ testeoRedirErrore(){
          echo -n "0 " >> excel
          echo " === test === "
          cat  $1
-         echo " === salida ./msh  === "
+         echo " === output ./msh  === "
          cat  salida_msh2
-         echo " === salida esperada  === "
+         echo " === expected output  === "
          cat  salida_bash
    fi
    rm -f salida* res.txt salida_bash2
@@ -134,9 +134,9 @@ testeo2(){
 	 echo -n "0 " >> excel
 	 echo " === test === "
          cat  $1
-	 echo " === salida ./msh  === "
+	 echo " === output ./msh  === "
 	 cat  salida_msh
-	 echo " === salida esperada  === "		
+	 echo " === expected output  === "		
 	 cat  $2
    fi
    #sleep 1
@@ -156,9 +156,9 @@ testeo2bak(){
          echo -n "0 " >> excel
          echo " === test === "
          cat  $1
-         echo " === salida ./msh  === "
+         echo " === output ./msh  === "
          cat  salida_msh
-         echo " === salida esperada  === "
+         echo " === expected output  === "
          cat  $2
    fi
    #sleep 1
@@ -180,9 +180,9 @@ testeo2Error(){
 	 echo -n "0 " >> excel
 	 echo " === test === "
          cat  $1
-	 echo " === salida ./msh  === "
+	 echo " === output ./msh  === "
 	 cat salida_msh
-	 echo " === salida esperada  === "		
+	 echo " === expected output  === "		
 	 cat  $2
    fi   
    #sleep 1
@@ -203,16 +203,16 @@ testeo3(){
 		echo -n "0 " >> excel
 		echo " === test === "
 		cat  $1
-		echo "Los ficheros son diferentes"
+		echo "Files differ"
 	 fi
    else
 	 echo " Error"
 	 echo -n "0 " >> excel
 	 echo " === test === "
          cat  $1
-	 echo " === salida ./msh  === "
+	 echo " === output ./msh  === "
 	 cat  salida_msh
-	 echo " === salida esperada  === "		
+	 echo " === expected output  === "		
 	 cat  $2
    fi
 
@@ -231,7 +231,7 @@ testeoTimeError(){
 	echo -n "0 " >> excel
 	echo " === test === "
 	cat  $1
-	echo "Los ficheros son diferentes"
+	echo "Files differ"
  fi
 }
 
@@ -245,10 +245,10 @@ testeoCalc(){
 		echo " Error"
 	 	echo -n "0 " >> excel
 		echo " === test === "
-		echo "Uso de variable de entorno"
-		echo " === salida ./msh  === "
+		echo "Environment variable use"
+		echo " === output ./msh  === "
 		echo  $ENVIR
-		echo " === salida esperada  === "		
+		echo " === expected output  === "		
 		echo "Acc=13"
 	fi
 }
@@ -270,9 +270,9 @@ testeo2Calc(){
 	 echo -n "0 " >> excel
 	 echo " === test === "
          cat  $1 $2
-	 echo " === salida ./msh  === "
+	 echo " === output ./msh  === "
 	 cat  salida_msh1 salida_msh2
-	 echo " === salida esperada  === "		
+	 echo " === expected output  === "		
 	 cat  $3 $4
    fi
    #sleep 1
@@ -292,9 +292,9 @@ testeo2bak(){
          echo -n "0 " >> excel
          echo " === test === "
          cat  $1
-         echo " === salida ./msh  === "
+         echo " === output ./msh  === "
          cat  salida_msh
-         echo " === salida esperada  === "
+         echo " === expected output  === "
          cat  $2
    fi
    #sleep 1
@@ -314,9 +314,9 @@ testeoPwdError(){
 	 echo -n "0 " >> excel
 	 echo " === test === "
          cat  $1
-	 echo " === salida ./msh  === "
+	 echo " === output ./msh  === "
 	 cat  salida_msh_2
-	 echo " === salida esperada  === "		
+	 echo " === expected output  === "		
 	 cat  $2
    fi
    rm -f salida* res.txt salida_msh_2
@@ -326,31 +326,38 @@ testeoPwdError(){
 
 clear
 
-echo "*** PROBANDO EL MINISHELL "
+echo "*** TESTING MINISHELL "
 
  
 TDIR="./testdir"
 mkdir $TDIR
 unzip $1
 
-echo "Fichero : $1"
+echo "$1" | grep -q "ssoo_p2_[0-9]*[_]*[0-9]*[_]*[0-9]*.zip"
+
+if [ ! $? -eq 0 ] ;then
+        echo "Incorrect file name"
+        exit
+fi
+
+echo "File name correct"
 
 cp Makefile $TDIR
 cp *.so $TDIR
 cp msh.c $TDIR
-cp Autores.txt $TDIR
+cp Authors.txt $TDIR
 
 cd $TDIR
 
 
-if [ ! -f Autores.txt ]; then
-	echo "Error: falta archivo Autores.txt"
+if [ ! -f Authors.txt ]; then
+	echo "Error: Authors.txt not found"
 	cd ..
 	rm -r $TDIR
 	exit
 fi
 if [ ! -f msh.c ]; then
-	echo "Error: falta archivo msh.c"
+	echo "Error: msh.c not found"
 	cd ..
 	rm -r $TDIR
 	exit
@@ -361,9 +368,9 @@ make clean 2> /dev/null > /dev/null
 make       2> /dev/null > /dev/null
 
 
-echo "Compilando"
+echo "Compilation"
 if [ ! -f msh ]; then
-	echo "Error: no compila"
+	echo "Error"
 	cd ..
 #	rm -r $TDIR
 	exit
@@ -390,7 +397,7 @@ echo "wc -l  foo.txt"                 	> test1
 echo "wc -l  < foo.txt"               	> test2
 echo "cat foo.txt > salida_msh"         > test3
 echo "cat foo.txt > salida_bash"        > test3.res
-echo "cat noexiste.txt >& res.txt"    	> test4
+echo "cat noexiste.txt !> res.txt"    	> test4
 cat noexiste.txt 2> res.txt    		> test4.res
 
 #1 pipe
@@ -399,7 +406,7 @@ echo "grep 1      | grep a < foo.txt"  >test6
 echo "10a"                             >test6.res
 echo "cat foo.txt | grep a > salida_msh"  >test7
 echo "cat foo.txt | grep a > salida_bash"  >test7.res
-echo "cat noexiste.txt | grep a >& salida_msh"  >test7error
+echo "cat noexiste.txt | grep a !> salida_msh"  >test7error
 echo "cat noexiste.txt | grep a"  >test7error.res
 
 #2 pipes
@@ -408,7 +415,7 @@ echo "grep 1      | grep a | wc -l < foo.txt"  >test9
 echo "1"                                       >test9.res
 echo "cat foo.txt | grep a | wc -l > salida_msh"  >test10
 echo "cat foo.txt | grep a | wc -l > salida_bash"  >test10.res
-echo "cat noexiste.txt | grep a | wc -l >& salida_msh"  >test10Error
+echo "cat noexiste.txt | grep a | wc -l !> salida_msh"  >test10Error
 echo "cat noexiste.txt | grep a | wc -l"  >test10Error.res
 
 #N pipes
@@ -443,18 +450,18 @@ echo "MSH>>[OK] 10 % 7 = 7 * 1 + 3"  >>calc3.res
 echo "MSH>>"  >>calc3.res
 
 echo "mycalc 10 pp 7"      >calc4
-echo "[ERROR] La estructura del comando es <operando 1> <add/mod> <operando 2>"  >calc4.res
+echo "[ERROR] The structure of the command is  <operand 1> <add/mod> <operand 2>"  >calc4.res
 echo "mycalc mycalc 8 mas"      >calc5
-echo "[ERROR] La estructura del comando es <operando 1> <add/mod> <operando 2>"  >calc5.res
+echo "[ERROR] The structure of the command is  <operand 1> <add/mod> <operand 2>"  >calc5.res
 
 
 #mycp
 echo "mycp"								>bak1
-echo "[ERROR] La estructura del comando es mycp <fichero origen> <fichero destino>"		>bak1.res
+echo "[ERROR] The structure of the command is mycp <original file> <copied file>"		>bak1.res
 echo "mycp noexiste.txt ."						>bak2
-echo "[ERROR] Error al abrir el fichero origen"				>bak2.res
+echo "[ERROR] Error opening original file"				>bak2.res
 echo "mycp msh.c msh.c_bak"							>bak3
-echo "[OK] Copiado con exito el fichero msh.c a msh.c_bak"	>bak3.res
+echo "[OK] Copy has been successful between msh.c and msh.c_bak"	>bak3.res
 
 
 
@@ -525,5 +532,5 @@ rm -fr foo.txt test* excel tmp/msh.c salida_msh time* pwd1 pwd2*
 #salimos del directorio
 cd ..
 rm -r $TDIR
-rm msh.c 
+#rm msh.c 
 
