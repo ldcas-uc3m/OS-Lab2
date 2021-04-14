@@ -16,6 +16,7 @@
 
 #define MAX_COMMANDS 8
 
+// $ export LD_LIBRARY_PATH=/home/ldcas/Documents/GitHub/OS-Lab2/msh.c:$LD_LIBRARY_PATH
 
 // ficheros por si hay redirección
 char filev[3][64];
@@ -186,7 +187,9 @@ int main(int argc, char* argv[])
                 if (command_counter > MAX_COMMANDS)
                     printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
                 else {
+
                     /* PIPES */
+
                     int pipes[MAX_COMMANDS - 1][2]; // array to save the file descriptors of the pipes
                     /* creating all needed pipes */
                     if (command_counter > 1){
@@ -203,6 +206,16 @@ int main(int argc, char* argv[])
                         }
                     }
 
+                    /*for (int i = 0; i < MAX_COMMANDS - 1; i++){
+                        
+                        write(STDOUT_FILENO, itoa(i), 1);
+                        write(STDOUT_FILENO, "fd[0]: ", strlen("fd[0]: "));
+                        write(STDOUT_FILENO, itoa(pipes[i][0]), 1);
+                        write(STDOUT_FILENO, "fd[1]: ", strlen("fd[0]: "));
+                        write(STDOUT_FILENO, itoa(pipes[i][1]), 1);
+                        write(STDOUT_FILENO, "\n", strlen("\n"));
+                    }*/
+
                     for (int i = 0; i < command_counter; i++){
                         
                         int pid  = fork();
@@ -216,29 +229,25 @@ int main(int argc, char* argv[])
 
                             case 0:
                                 /* child process */
+                                write(STDOUT_FILENO, "im a child\n", strlen("im a child\n"));
 
                                 /* PIPES */
                                 if (command_counter > 1){
                                     /* */
-                                    static number_of_commands = command_counter;
-                                    switch (i){
-                                    case 0:
+                                    if (i == 0){
                                         /* first command */
                                         close(STDOUT_FILENO);
                                         dup(pipes[0][1]); // stdout is now pipe write
-                                        break;
-                                    case number_of_commands:
+                                    } else if (i == command_counter - 1){
                                         /* last command */
                                         close(STDIN_FILENO);
-                                        dup(pipes[command_counter - 1][0]); // stdout is now pipe read
-                                        break;
-
-                                    default:
+                                        dup(pipes[command_counter - 2][0]); // stdout is now pipe read
+                                    } else {
+                                        /* regular command */
                                         close(STDIN_FILENO);
                                         dup(pipes[i - 1][0]);
                                         close(STDOUT_FILENO);
                                         dup(pipes[i - 1][1]);
-                                        break;
                                     }
                                 }
 
@@ -308,6 +317,7 @@ int main(int argc, char* argv[])
                                     close(pipes[j][0]);
                                     close(pipes[j][1]);
                                 }
+                                write(STDOUT_FILENO, "im a parent\n", strlen("im a parent\n"));
                                 break;
                         }
                     }
