@@ -49,6 +49,9 @@ void getCompleteCommand(char*** argvv, int num_command) {
 }
 
 void mycalc(char ***argvv){
+
+    // TODO: fix accum
+
 	/* Check if the command is mycalc */
 	if (strcmp(argvv[0][0], "mycalc") == 0){
 
@@ -229,7 +232,7 @@ int main(int argc, char* argv[])
 
                             case 0:
                                 /* child process */
-                                write(STDOUT_FILENO, "im a child\n", strlen("im a child\n"));
+                                //write(STDOUT_FILENO, "im a child\n", strlen("im a child\n"));
 
                                 /* PIPES */
                                 if (command_counter > 1){
@@ -307,19 +310,17 @@ int main(int argc, char* argv[])
                                             perror("Error executing the child");
                                         }
                                     }
+                                    //write(STDOUT_FILENO, "im a parent\n", strlen("im a parent\n"));
                                 }
-
-                                /* PIPES */
-
-                                /* close pipes */
-                                //close(pipes[0, MAX_COMMANDS - 1][0, 1]);
-                                for (int j = 0; j < command_counter - 1; j++){
-                                    close(pipes[j][0]);
-                                    close(pipes[j][1]);
-                                }
-                                write(STDOUT_FILENO, "im a parent\n", strlen("im a parent\n"));
                                 break;
                         }
+                    }
+                    /* PIPES */
+                    /* close pipes */
+                    //close(pipes[0, MAX_COMMANDS - 1][0, 1]);
+                    for (int j = 0; j < command_counter - 1; j++){
+                        close(pipes[j][0]);
+                        close(pipes[j][1]);
                     }
                 }
             }
