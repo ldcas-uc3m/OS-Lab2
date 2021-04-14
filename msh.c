@@ -219,62 +219,26 @@ int main(int argc, char* argv[])
                         write(STDOUT_FILENO, "\n", strlen("\n"));
                     }*/
 
+                    pid_t pid;
+
                     for (int i = 0; i < command_counter; i++){
                         
-                        int pid  = fork();
+                        pid  = fork();
+                    }
 
-                        switch (pid){
+                    switch (pid){
                         
-                            case -1:
-                                /* error */
-                                perror("Error in fork");
-                                return -1;
+                        case -1:
+                            /* error */
+                            perror("Error in fork");
+                            return -1;
 
-                            case 0:
-                                /* child process */
-                                //write(STDOUT_FILENO, "im a child\n", strlen("im a child\n"));
-
-                                /* PIPES */
-                                if (command_counter > 1){
-                                    /* */
-                                    if (i == 0){
-                                        /* first command */
-                                        close(STDOUT_FILENO);
-                                        dup(pipes[0][1]); // stdout is now pipe write
-                                    } else if (i == command_counter - 1){
-                                        /* last command */
-                                        close(STDIN_FILENO);
-                                        dup(pipes[command_counter - 2][0]); // stdout is now pipe read
-                                    } else {
-                                        /* regular command */
-                                        close(STDIN_FILENO);
-                                        dup(pipes[i - 1][0]);
-                                        close(STDOUT_FILENO);
-                                        dup(pipes[i - 1][1]);
-                                    }
-                                }
-
-                                /* REDIRECTION */
-
-                                // TODO: prepare errors
-                                if (filev[0][0] != '0'){
-                                    /* redirect from input, file[0] as stdin */
-                                    close(STDIN_FILENO); // free file desc. 0
-                                    int fd = open(filev[0], O_RDONLY); // fd is now 0
-                                }
-
-                                if (filev[1][0] != '0'){
-                                    /* redirect to output, file[1] as stdout */
-                                    close(STDOUT_FILENO);
-                                    int fd = open(filev[1], O_CREAT | O_RDWR, S_IRWXU);                          
-                                }
-
-                                if (filev[2][0] != '0'){
-                                    /* redirect error, file[1] as stderr */
-                                    close(STDERR_FILENO);
-                                    int fd = open(filev[2], O_CREAT | O_RDWR, S_IRWXU);                          
-                                }
-
+                        case 0:
+                            /* child process */
+                            write(STDOUT_FILENO, "im a child\n", strlen("im a child\n"));
+                            
+                            
+                            for (int i = 0; i < command_counter; i++){
                                 /* INTERNAL COMMANDS */
                             
                                 char* pCmd = argvv[i][0]; // internal command is current command
@@ -300,31 +264,74 @@ int main(int argc, char* argv[])
                                     exit(0);
                                     break;
                                 }
+                            }   
 
-                            default:
-                                /* parent process */
-                                /* BACKGROUND */
-                                if (in_background != 1){
-                                    while (wait(&status) != pid){ // wait for child to finish
-                                        if (status != 0){
-                                            perror("Error executing the child");
-                                        }
+                        default:
+                            /* parent process */
+                            /* PIPES */
+
+                            for (int i = 0; i < command_counter; i++){
+                                if (command_counter > 1){
+                                    /* */
+                                    if (i == 0){
+                                        /* first command */
+                                        close(STDOUT_FILENO);
+                                        dup(pipes[0][1]); // stdout is now pipe write
+                                    } else if (i == command_counter - 1){
+                                        /* last command */
+                                        close(STDIN_FILENO);
+                                        dup(pipes[command_counter - 2][0]); // stdout is now pipe read
+                                    } else {
+                                        /* regular command */
+                                        close(STDIN_FILENO);
+                                        dup(pipes[i - 1][0]);
+                                        close(STDOUT_FILENO);
+                                        dup(pipes[i - 1][1]);
                                     }
-                                    //write(STDOUT_FILENO, "im a parent\n", strlen("im a parent\n"));
+                                }
+                            }
+                            /* REDIRECTION */
+
+                            // TODO: prepare errors
+                            if (filev[0][0] != '0'){
+                                /* redirect from input, file[0] as stdin */
+                                close(STDIN_FILENO); // free file desc. 0
+                                int fd = open(filev[0], O_RDONLY); // fd is now 0
+                            }
+
+                            if (filev[1][0] != '0'){
+                                /* redirect to output, file[1] as stdout */
+                                close(STDOUT_FILENO);
+                                int fd = open(filev[1], O_CREAT | O_RDWR, S_IRWXU);                          
+                            }
+
+                            if (filev[2][0] != '0'){
+                                /* redirect error, file[1] as stderr */
+                                close(STDERR_FILENO);
+                                int fd = open(filev[2], O_CREAT | O_RDWR, S_IRWXU);                          
+                            }
+
+                            /* BACKGROUND */
+                            
+                            if (in_background != 1){
+                                while (wait(&status) != pid){ // wait for child to finish
+                                    if (status != 0){
+                                        perror("Error executing the child");
+                                    }
+                                }
+                                write(STDOUT_FILENO, "im a parent\n", strlen("im a parent\n"));
+                                /* PIPES */
+                                /* close pipes */
+                                //close(pipes[0, MAX_COMMANDS - 1][0, 1]);
+                                for (int j = 0; j < command_counter - 1; j++){
+                                    close(pipes[j][0]);
+                                    close(pipes[j][1]);
                                 }
                                 break;
-                        }
-                    }
-                    /* PIPES */
-                    /* close pipes */
-                    //close(pipes[0, MAX_COMMANDS - 1][0, 1]);
-                    for (int j = 0; j < command_counter - 1; j++){
-                        close(pipes[j][0]);
-                        close(pipes[j][1]);
+                            }
                     }
                 }
             }
-        }
-	return 0;
+	    return 0;
+    }
 }
-
