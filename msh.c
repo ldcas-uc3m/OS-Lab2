@@ -198,7 +198,7 @@ int main(int argc, char* argv[])
                                 pipes[j][1] = fd[1];
                             } else{
                                 perror("Error creating the pipe\n");
-                                return;
+                                return 0;
                             }
                         }
                     }
@@ -220,13 +220,14 @@ int main(int argc, char* argv[])
                                 /* PIPES */
                                 if (command_counter > 1){
                                     /* */
+                                    static number_of_commands = command_counter;
                                     switch (i){
                                     case 0:
                                         /* first command */
                                         close(STDOUT_FILENO);
                                         dup(pipes[0][1]); // stdout is now pipe write
                                         break;
-                                    case command_counter:
+                                    case number_of_commands:
                                         /* last command */
                                         close(STDIN_FILENO);
                                         dup(pipes[command_counter - 1][0]); // stdout is now pipe read
@@ -300,7 +301,7 @@ int main(int argc, char* argv[])
                                 }
 
                                 /* PIPES */
-                                
+
                                 /* close pipes */
                                 //close(pipes[0, MAX_COMMANDS - 1][0, 1]);
                                 for (int j = 0; j < command_counter - 1; j++){
