@@ -19,7 +19,10 @@
 
 // export LD_LIBRARY_PATH=/home/ldcas/Documents/GitHub/OS-Lab2/msh.c:$LD_LIBRARY_PATH
 
-int accum = 0; // accumulation of mycalc
+// accumulator
+static char Acc[] = "Acc";
+char __init_value[255] = "0"
+setenv(Acc, __init_value, 1); // accumulation of mycalc
 
 // ficheros por si hay redirección
 char filev[3][64];
@@ -54,10 +57,6 @@ void getCompleteCommand(char*** argvv, int num_command) {
 void mycalc(char ***argvv){
 	/* Check if the command is mycalc */
 	if (strcmp(argvv[0][0], "mycalc") == 0){
-
-        int accum = 0;
-
-
 		/* Check if the input command is composed by operand1 add/mod and operand 2 */
 		if (argvv[0][1] != NULL && argvv[0][2] != NULL && argvv[0][3] != NULL){
 			
@@ -67,16 +66,17 @@ void mycalc(char ***argvv){
 			
 			/* If add define the accumulator and show the result in the standard error output */
 			if (strcmp(argvv[0][2],"add")==0){
-                /*char buf_accum[50];
-                sprintf(buf_accum, "%d", accum);
-                const char *env = buf_accum;*/
                	int add = op1 + op2;
-                accum += add;
+
+                /* accummulator */
+                char old_accum[256];
+                sprintf(old_accum, "%i", atoi(getenv(Acc)) + add); // add result to accum
+                setenv(Acc, old_accum, 1); // set accum
 				char buf_add[50];
-                setenv("Accumulator", env, 1);
-				sprintf(buf_add, "[OK] %d + %d = %d; Acc %d\n", op1, op2, add, accum);
-				
-				/* Write in standard output error and if there is an error show the error */
+                char *accum = getenv(Acc);
+
+                /* Write to stdout */
+				sprintf(buf_add, "[OK] %d + %d = %d; Acc %s\n", op1, op2, add, accum);
 				if (write(2, buf_add, strlen(buf_add)) < strlen(buf_add)){
 					perror("Error in write\n");
 				}
@@ -252,7 +252,7 @@ int main(int argc, char* argv[])
                                     close(STDOUT_FILENO);
                                     int fd = open(filev[1], O_CREAT | O_WRONLY, S_IRWXU);                          
                                 }
-                                wait(); // wait for child to die
+                                wait(NULL); // wait for child to die
 
                                 close(pipefd[1]);
                                 dup2(pipefd[0], STDIN_FILENO);
