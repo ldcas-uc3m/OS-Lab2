@@ -263,14 +263,74 @@ int main(int argc, char* argv[])
 
 
                     if (command_counter == 3){
+                        int pid;
+                        int pfd1[2];
+                        int pfd2[2];
+                        int i;
 
-                        int cur_command = -1;
-                        pid_t pid = 1;
+                        if (pipe(pfd1) == -1){
+                            perror("Error in pipe");
+                            exit(-1);
+                        }
+
+                        if (pipe(pfd2) == -1){
+                            perror("Error in pipe");
+                            exit(-1);
+                        }
+
+                        for (i = 0; i < 3; i++){
+                            pid = fork();
+                            switch (pid){
+                                case -1:
+                                    /* error */
+                                    perror("Error in fork");
+                                    return -1;
+
+                                case 0:
+
+                                    if (i == 0){
+                                        close(pfd1[0]);
+                                        close(STDOUT_FILENO);
+                                        dup(pfd1[1]);
+                                        close(pfd1[1]);
+                                        close(pfd2[0,1]);
+                                        execvp(argvv[0][0], argvv[0]);
+                                        exit(0);
+                                        break;
+                                    }
+
+                                    if (i == 1){
+                                        close(pfd1[1]);
+                                        close(STDIN_FILENO);
+                                        dup(pfd1[0]);
+                                        close(pfd1[0,1]);
+
+                                        close(pfd2[0]);
+                                        close(STDOUT_FILENO);
+                                        dup(pfd2[1]);
+                                        close(pfd2[0,1]);
+
+                                        execvp(argvv[1][0], argvv[1]);
+                                        exit(0);
+                                        break;
+                                    }
 
 
+                                default:
+                                    if (i == 2){
+                                        close(pfd2[1]);
+                                        close(STDIN_FILENO);
+                                        dup(pfd2[0]);
+                                        close(pfd1[0,1]);
+                                        close(pfd2[0,1]);
 
-
-
+                                        execvp(argvv[2][0], argvv[2]);
+                                        exit(0);
+                                        break;
+                                    }
+                                 
+                            }
+                        }
                     }
 
 
