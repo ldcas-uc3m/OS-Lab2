@@ -1,6 +1,7 @@
 //  MSH main file
 // Write your msh source code here
 
+
 //#include "parser.h"
 #include <stddef.h>			/* NULL */
 #include <sys/types.h>
@@ -72,7 +73,7 @@ void mycalc(char ***argvv){
                	int add = op1 + op2;
                 accum += add;
 				char buf_add[50];
-                //setenv("Accumulator", env, 1);
+                setenv("Accumulator", env, 1);
 				sprintf(buf_add, "[OK] %d + %d = %d; Acc %d\n", op1, op2, add, accum);
 				
 				/* Write in standard output error and if there is an error show the error */
@@ -194,17 +195,9 @@ int main(int argc, char* argv[])
                 if (command_counter > MAX_COMMANDS)
                     printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
                 else {
-                    if (filev[0][0] != '0'){
-                        /* file[0] as stdin */
-                        close(STDIN_FILENO); // free file desc. 0
-                        int fd = open(filev[0], O_RDONLY); // fd is now 0
-                    }
+                    
 
-                    if (filev[1][0] != '0'){
-                        /* file[1] as stdout */
-                        close(STDOUT_FILENO);
-                        int fd = open(filev[1], O_CREAT | O_WRONLY, S_IRWXU);                          
-                    }
+                    
 
                     if (filev[2][0] != '0'){
                         /* file[1] as stderr */
@@ -224,7 +217,6 @@ int main(int argc, char* argv[])
                         if (pipe(fd)<0){
                             perror("Error in pipe");
                             exit(-1);
-
                         }
 
                         pid = fork();
@@ -235,6 +227,11 @@ int main(int argc, char* argv[])
                                 exit(-1);
 
                             case 0:
+                                if (filev[0][0] != '0'){
+                                    /* file[0] as stdin */
+                                    close(STDIN_FILENO); // free file desc. 0
+                                    int fd = open(filev[0], O_RDONLY); // fd is now 0
+                                }
 
                                 close(fd[0]);
                                 close(STDOUT_FILENO);
@@ -245,6 +242,11 @@ int main(int argc, char* argv[])
                                 break;
 
                             default:
+                                if (filev[1][0] != '0'){
+                                    /* file[1] as stdout */
+                                    close(STDOUT_FILENO);
+                                    int fd = open(filev[1], O_CREAT | O_WRONLY, S_IRWXU);                          
+                                }
                                 wait(NULL);
                                 close(fd[1]);
                                 close(STDIN_FILENO);
@@ -253,10 +255,6 @@ int main(int argc, char* argv[])
                                 execvp(argvv[1][0], argvv[1]);
                                 exit(0);
                                 break;
-
-
-
-
                         }
 
                     }
@@ -289,6 +287,12 @@ int main(int argc, char* argv[])
                                 case 0:
 
                                     if (i == 0){
+                                        if (filev[0][0] != '0'){
+                                            /* file[0] as stdin */
+                                            close(STDIN_FILENO); // free file desc. 0
+                                            int fd = open(filev[0], O_RDONLY); // fd is now 0
+                                        }
+
                                         close(pfd1[0]);
                                         close(STDOUT_FILENO);
                                         dup(pfd1[1]);
@@ -318,6 +322,12 @@ int main(int argc, char* argv[])
 
                                 default:
                                     if (i == 2){
+                                        if (filev[1][0] != '0'){
+                                            /* file[1] as stdout */
+                                            close(STDOUT_FILENO);
+                                            int fd = open(filev[1], O_CREAT | O_WRONLY, S_IRWXU);                          
+                                        }
+
                                         close(pfd2[1]);
                                         close(STDIN_FILENO);
                                         dup(pfd2[0]);
@@ -328,7 +338,6 @@ int main(int argc, char* argv[])
                                         exit(0);
                                         break;
                                     }
-                                 
                             }
                         }
                     }
@@ -414,6 +423,6 @@ int main(int argc, char* argv[])
                     }
                 }
             }
-        }
+    }
 	return 0;
 }
