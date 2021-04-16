@@ -95,7 +95,6 @@ void mycalc(char ***argvv){
 					perror("Error in write\n");
 				}
 			}
-			
 		} 
 		
 		/* If the input does not follow the the structure show the error in the standard output */
@@ -185,11 +184,6 @@ int main(int argc, char* argv[])
 
 
         /************************ STUDENTS CODE ********************************/
-        /*
-        // save stdio
-        int save_stdin = dup(STDIN_FILENO);
-        int save_stdout = dup(STDOUT_FILENO); 
-        */
 
         int curr_command = -1; // identifies which child is in charge of which command
 
@@ -212,53 +206,20 @@ int main(int argc, char* argv[])
                     perror("Error in fork");
                     return -1;
                 } else if (pid != 0){ /* parent process */
-                    /*write(STDOUT_FILENO, "im a parent, ", strlen("im a parent, "));
-                    write(STDOUT_FILENO, "current command: ", strlen("current command: "));
-                    switch(curr_command){
-                        case -1:
-                            write(STDOUT_FILENO, "-1\n", 3);
-                            break;
-                        case 0:
-                            write(STDOUT_FILENO, "0\n", 2);
-                            break;
-                        case 1:
-                            write(STDOUT_FILENO, "1\n", 2);
-                            break;
-                        case 2:
-                            write(STDOUT_FILENO, "2\n", 2);
-                            break;
-                    }*/
 
                     /* BACKGROUND */
                            
                     if (in_background != 1){
                         while (wait(&status) != pid){ // wait for children to finish
                             if (status != 0){
-                                perror("Error executing the child");
+                                //perror("Error executing the child");
                             }
                         }
-                        write(STDOUT_FILENO, "children died\n", strlen("children died\n"));
                     }
                 } else { /* child process */
-                    /*write(STDOUT_FILENO, "im a child, ", strlen("im a child, "));
-                    write(STDOUT_FILENO, "current command: ", strlen("current command: "));
-                    switch(curr_command){
-                        case -1:
-                            write(STDOUT_FILENO, "-1\n", 3);
-                            break;
-                        case 0:
-                            write(STDOUT_FILENO, "0\n", 2);
-                            break;
-                        case 1:
-                            write(STDOUT_FILENO, "1\n", 2);
-                            break;
-                        case 2:
-                            write(STDOUT_FILENO, "2\n", 2);
-                            break;
-                    }*/
                            
                     /* REDIRECTION */
-                    // TODO: prepare errors
+                    
                     if ((curr_command == 0) && (filev[0][0] != '0')){
                         /* redirect from input, file[0] as stdin */
                         close(STDIN_FILENO); // free file desc. 0
