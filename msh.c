@@ -21,9 +21,6 @@
 // ficheros por si hay redirección
 char filev[3][64];
 
-// array to save the file descriptors of the pipes
-int pipes[MAX_COMMANDS - 1][2];
-
 //to store the execvp second parameter
 char *argv_execvp[8];
 
@@ -166,17 +163,16 @@ int main(int argc, char* argv[])
     int num_commands;
 
 
-	while (1) 
-	{
+	while (1){
 		int status = 0;
 	    int command_counter = 0;
 		int in_background = 0;
 		signal(SIGINT, siginthandler);
 
-		// Prompt 
+		/* Prompt */ 
 		write(STDERR_FILENO, "MSH>>", strlen("MSH>>"));
 
-		// Get command
+		/* Get command */
         //********** DO NOT MODIFY THIS PART. IT DISTINGUISH BETWEEN NORMAL/CORRECTION MODE***************
         executed_cmd_lines++;
         if( end != 0 && executed_cmd_lines < end) {
@@ -189,9 +185,11 @@ int main(int argc, char* argv[])
 
 
         /************************ STUDENTS CODE ********************************/
+        /*
         // save stdio
         int save_stdin = dup(STDIN_FILENO);
-        int save_stdout = dup(STDOUT_FILENO);
+        int save_stdout = dup(STDOUT_FILENO); 
+        */
 
         int curr_command = -1; // identifies which child is in charge of which command
 
@@ -199,22 +197,6 @@ int main(int argc, char* argv[])
             if (command_counter > MAX_COMMANDS){
                 printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
             } else {
-                
-                /* PIPES */
-                /* creating all needed pipes */
-                if (command_counter > 1){
-                    for (int j = 0; j < command_counter - 1; j++){
-                        int fd[2];
-                        if (pipe(fd) == 0){
-                            /* save the file descriptors to pipes[][] */
-                            pipes[j][0] = fd[0];
-                            pipes[j][1] = fd[1];
-                        } else{
-                            perror("Error creating the pipe\n");
-                            return 0;
-                        }
-                    }
-                }
                 /* create subprocesses */
 
                 int pid = 1;
@@ -230,7 +212,7 @@ int main(int argc, char* argv[])
                     perror("Error in fork");
                     return -1;
                 } else if (pid != 0){ /* parent process */
-                    write(STDOUT_FILENO, "im a parent, ", strlen("im a parent, "));
+                    /*write(STDOUT_FILENO, "im a parent, ", strlen("im a parent, "));
                     write(STDOUT_FILENO, "current command: ", strlen("current command: "));
                     switch(curr_command){
                         case -1:
@@ -245,7 +227,7 @@ int main(int argc, char* argv[])
                         case 2:
                             write(STDOUT_FILENO, "2\n", 2);
                             break;
-                    }
+                    }*/
 
                     /* BACKGROUND */
                            
@@ -258,7 +240,7 @@ int main(int argc, char* argv[])
                         write(STDOUT_FILENO, "children died\n", strlen("children died\n"));
                     }
                 } else { /* child process */
-                    write(STDOUT_FILENO, "im a child, ", strlen("im a child, "));
+                    /*write(STDOUT_FILENO, "im a child, ", strlen("im a child, "));
                     write(STDOUT_FILENO, "current command: ", strlen("current command: "));
                     switch(curr_command){
                         case -1:
@@ -273,7 +255,7 @@ int main(int argc, char* argv[])
                         case 2:
                             write(STDOUT_FILENO, "2\n", 2);
                             break;
-                    }
+                    }*/
                            
                     /* REDIRECTION */
                     // TODO: prepare errors
@@ -296,21 +278,22 @@ int main(int argc, char* argv[])
 
                     if (command_counter > 1){
                         /* setup pipes */
+                        int pipe0[2], pipe1[2];
+                        pipe(pipe0);
+                        pipe(pipe1);
                         if (curr_command == 0){ /* first command - pipe out */
-                            close(pipes[0][0]); // close read pipe
-                            dup2(pipes[0][1], STDOUT_FILENO); // stdout is now pipe write
-                            close(pipes[0][1]); // close write pipe
+                            close(pipe0[0]); // close read pipe
+                            dup2(pipe0[1], STDOUT_FILENO); // stdout is now pipe write
+                            close(pipe0[1]); // close write pipe
                         } else if (curr_command == command_counter - 1){ /* last command - pipe in */
-                            close(pipes[curr_command - 1][1]); // close write pipe   
-                            dup2(pipes[curr_command - 1][0], STDIN_FILENO); // stdin is now pipe read
-                            close(pipes[curr_command -1][0]);
+                            close(pipe0[1]); // close write pipe   
+                            dup2(pipe0[0], STDIN_FILENO); // stdin is now pipe read
+                            close(pipe0[0]);
                         } else { /* intermediate command - pipe in/out */
-                            /* setup pipes */
-                            dup2(pipes[curr_command - 1][0], STDIN_FILENO);
-                            dup2(pipes[curr_command][1], STDOUT_FILENO);
-                            /* close pipes */
-                            close(pipes[curr_command - 1][0]);
-                            close(pipes[curr_command][1]);
+                            dup2(pipe0[0], STDIN_FILENO);
+                            dup2(pipe1[1], STDOUT_FILENO);
+                            close(pipe0[0]);
+                            close(pipe1[1]);
                         }
                     }
                     /* execute current command */
@@ -333,14 +316,7 @@ int main(int argc, char* argv[])
                         perror("Error in execvp\n");
                         exit(0);
                     }
-                    exit(0);
                 }
-            }
-            /* close pipes */
-            //close(pipes[0, MAX_COMMANDS - 1][0, 1]);
-            for (int j = 0; j < command_counter - 1; j++){
-                close(pipes[j][0]);
-                close(pipes[j][1]);
             }
         }
     }
