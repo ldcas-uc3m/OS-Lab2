@@ -224,14 +224,14 @@ int main(int argc, char* argv[])
                         }
                     }
 
+                    /* create subprocesses */
+
                     int curr_command = -1; // identifies which child is in charge of which command
                     pid_t pid = 1;
-
                     for (int i = 0; i < command_counter; i++){
-                        
                         if (pid != 0){ // only father can fork
                             pid  = fork();
-                            if (pid == 0){ // child
+                            if (pid == 0){ /* child */
                                 curr_command = i;
                             }
                         }
@@ -252,14 +252,11 @@ int main(int argc, char* argv[])
                                 /* redirect from input, file[0] as stdin */
                                 close(STDIN_FILENO); // free file desc. 0
                                 int fd = open(filev[0], O_RDONLY); // fd is now 0
-                            }
-
-                            if ((curr_command == command_counter - 1) && (filev[1][0] != '0')){
+                            } else if ((curr_command == command_counter - 1) && (filev[1][0] != '0')){
                                 /* redirect to output, file[1] as stdout */
                                 close(STDOUT_FILENO);
                                 int fd = open(filev[1], O_CREAT | O_RDWR, S_IRWXU);                          
                             }
-
                             if (filev[2][0] != '0'){
                                 /* redirect error, file[1] as stderr */
                                 close(STDERR_FILENO);
@@ -269,30 +266,28 @@ int main(int argc, char* argv[])
                             /* PIPES */
 
                             if (command_counter > 1){
-                                    /* setup pipes */
-                                if (curr_command == 0){
-                                    /* first command - pipe out*/
+                                /* setup pipes */
+                                if (curr_command == 0){ /* first command - pipe out */
                                     close(pipes[0][0]); // close read pipe
                                     dup2(pipes[0][1], STDOUT_FILENO); // stdout is now pipe write
                                     close(pipes[0][1]); // close write pipe
-                                } else if (curr_command == command_counter - 1){
-                                    /* last command - pipe in */
+                                } else if (curr_command == command_counter - 1){ /* last command - pipe in */
                                     close(pipes[curr_command - 1][1]); // close write pipe   
                                     dup2(pipes[curr_command - 1][0], STDIN_FILENO); // stdout is now pipe read
                                     close(pipes[curr_command -1][0]);
-                                } else {
-                                    /* intermediate command - pipe in/out */
+                                } else { /* intermediate command - pipe in/out */
+                                    /* setup pipes */
                                     dup2(pipes[curr_command - 1][0], STDIN_FILENO);
                                     dup2(pipes[curr_command][1], STDOUT_FILENO);
+                                    /* close pipes */
                                     close(pipes[curr_command - 1][0]);
                                     close(pipes[curr_command][1]);
                                 }
                             }
-                            
                             /* execute current command */
 
                             /* INTERNAL COMMANDS */
-                                                            
+                         
                             if (strcmp(argvv[curr_command][0],"mycp") == 0){
                                 /* execute mycpy */
                                 mycp(argvv);
@@ -302,7 +297,6 @@ int main(int argc, char* argv[])
                                 mycalc(argvv);
                                 exit(0);
                             } else{
-
                                 /* COMMAND EXECUTION */
 
                                 getCompleteCommand(argvv, curr_command);
@@ -323,22 +317,20 @@ int main(int argc, char* argv[])
                                         perror("Error executing the child");
                                     }
                                 }
-                                write(STDOUT_FILENO, "children died\n", strlen("children died\n"));
 
                                 /* reset stdio */
                                 dup2(STDIN_FILENO, 0);
                                 dup2(STDOUT_FILENO, 1);
-                                break;
 
-                                /* PIPES */
-                                /* close pipes */
-                                //close(pipes[0, MAX_COMMANDS - 1][0, 1]);
-                                for (int j = 0; j < command_counter - 1; j++){
-                                    close(pipes[j][0]);
-                                    close(pipes[j][1]);
-                                }
+                                write(STDOUT_FILENO, "children died\n", strlen("children died\n"));
                             }
                             break;
+                    }
+                    /* close pipes */
+                    //close(pipes[0, MAX_COMMANDS - 1][0, 1]);
+                    for (int j = 0; j < command_counter - 1; j++){
+                        close(pipes[j][0]);
+                        close(pipes[j][1]);
                     }
                 }
             }
