@@ -177,26 +177,67 @@ int main(int argc, char* argv[])
 		write(STDERR_FILENO, "MSH>>", strlen("MSH>>"));
 
 		// Get command
-                //********** DO NOT MODIFY THIS PART. IT DISTINGUISH BETWEEN NORMAL/CORRECTION MODE***************
-                executed_cmd_lines++;
-                if( end != 0 && executed_cmd_lines < end) {
-                    command_counter = read_command_correction(&argvv, filev, &in_background, cmd_lines[executed_cmd_lines]);
-                }else if( end != 0 && executed_cmd_lines == end)
-                    return 0;
-                else
-                    command_counter = read_command(&argvv, filev, &in_background); //NORMAL MODE
-                //************************************************************************************************
+        //********** DO NOT MODIFY THIS PART. IT DISTINGUISH BETWEEN NORMAL/CORRECTION MODE***************
+        executed_cmd_lines++;
+        if( end != 0 && executed_cmd_lines < end) {
+            command_counter = read_command_correction(&argvv, filev, &in_background, cmd_lines[executed_cmd_lines]);
+        }else if( end != 0 && executed_cmd_lines == end)
+                return 0;
+        else
+            command_counter = read_command(&argvv, filev, &in_background); //NORMAL MODE
+        //************************************************************************************************
 
 
-              /************************ STUDENTS CODE ********************************/
-	        if (command_counter > 0) {
-                if (command_counter > MAX_COMMANDS)
-                    printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
-                else {
+        /************************ STUDENTS CODE ********************************/
+        // save stdio
+        int save_stdin = dup(STDIN_FILENO);
+        int save_stdout = dup(STDOUT_FILENO);
 
-                    write(STDOUT_FILENO, "command_counter: ", strlen("command_counter: "));
-                    /*
-                    switch(command_counter){
+        int curr_command = -1; // identifies which child is in charge of which command
+
+	    if (command_counter > 0) {
+            if (command_counter > MAX_COMMANDS){
+                printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
+            } else {
+                
+                /* PIPES */
+                /* creating all needed pipes */
+                if (command_counter > 1){
+                    for (int j = 0; j < command_counter - 1; j++){
+                        int fd[2];
+                        if (pipe(fd) == 0){
+                            /* save the file descriptors to pipes[][] */
+                            pipes[j][0] = fd[0];
+                            pipes[j][1] = fd[1];
+                        } else{
+                            perror("Error creating the pipe\n");
+                            return 0;
+                        }
+                    }
+                }
+                /* create subprocesses */
+
+                int parent_pid = getpid();
+                int pid = parent_pid;
+                for (int i = 0; i < command_counter; i++){
+                    if (pid == parent_pid){ // only father can fork
+                        if (fork() == 0){ /* child */
+                            curr_command = i;
+                            pid = getpid();
+                        }
+                    } else break;
+                }
+
+                if (pid == -1){ /* error */
+                    perror("Error in fork");
+                    return -1;
+                } else if (pid == parent_pid){ /* parent process */
+                    write(STDOUT_FILENO, "im a parent, ", strlen("im a parent, "));
+                    write(STDOUT_FILENO, "current command: ", strlen("current command: "));
+                    switch(curr_command){
+                        case -1:
+                            write(STDOUT_FILENO, "-1\n", 3);
+                            break;
                         case 0:
                             write(STDOUT_FILENO, "0\n", 2);
                             break;
@@ -206,134 +247,103 @@ int main(int argc, char* argv[])
                         case 2:
                             write(STDOUT_FILENO, "2\n", 2);
                             break;
-                    }*/
+                    }
+
+                    /* BACKGROUND */
+                           
+                    if (in_background != 1){
+                        while (wait(&status) != pid){ // wait for children to finish
+                            if (status != 0){
+                                perror("Error executing the child");
+                            }
+                        }
+                        write(STDOUT_FILENO, "children died\n", strlen("children died\n"));
+                    }
+                } else { /* child process */
+                    write(STDOUT_FILENO, "im a child, ", strlen("im a child, "));
+                    write(STDOUT_FILENO, "current command: ", strlen("current command: "));
+                    switch(curr_command){
+                        case -1:
+                            write(STDOUT_FILENO, "-1\n", 3);
+                            break;
+                        case 0:
+                            write(STDOUT_FILENO, "0\n", 2);
+                            break;
+                        case 1:
+                            write(STDOUT_FILENO, "1\n", 2);
+                            break;
+                        case 2:
+                            write(STDOUT_FILENO, "2\n", 2);
+                            break;
+                    }
+                           
+                    /* REDIRECTION */
+                    // TODO: prepare errors
+                    if ((curr_command == 0) && (filev[0][0] != '0')){
+                        /* redirect from input, file[0] as stdin */
+                        close(STDIN_FILENO); // free file desc. 0
+                        int fd = open(filev[0], O_RDONLY); // fd is now 0
+                    } else if ((curr_command == command_counter - 1) && (filev[1][0] != '0')){
+                        /* redirect to output, file[1] as stdout */
+                        close(STDOUT_FILENO);
+                        int fd = open(filev[1], O_CREAT | O_RDWR, S_IRWXU);                          
+                    }
+                    if (filev[2][0] != '0'){
+                        /* redirect error, file[1] as stderr */
+                        close(STDERR_FILENO);
+                        int fd = open(filev[2], O_CREAT | O_RDWR, S_IRWXU);                          
+                    }
+
                     /* PIPES */
 
-                    /* creating all needed pipes */
                     if (command_counter > 1){
-                        for (int j = 0; j < command_counter - 1; j++){
-                            int fd[2];
-                            if (pipe(fd) == 0){
-                                /* save the file descriptors to pipes[][] */
-                                pipes[j][0] = fd[0];
-                                pipes[j][1] = fd[1];
-                            } else{
-                                perror("Error creating the pipe\n");
-                                return 0;
-                            }
+                        /* setup pipes */
+                        if (curr_command == 0){ /* first command - pipe out */
+                            close(pipes[0][0]); // close read pipe
+                            dup2(pipes[0][1], STDOUT_FILENO); // stdout is now pipe write
+                            close(pipes[0][1]); // close write pipe
+                        } else if (curr_command == command_counter - 1){ /* last command - pipe in */
+                            close(pipes[curr_command - 1][1]); // close write pipe   
+                            dup2(pipes[curr_command - 1][0], STDIN_FILENO); // stdout is now pipe read
+                            close(pipes[curr_command -1][0]);
+                        } else { /* intermediate command - pipe in/out */
+                            /* setup pipes */
+                            dup2(pipes[curr_command - 1][0], STDIN_FILENO);
+                            dup2(pipes[curr_command][1], STDOUT_FILENO);
+                            /* close pipes */
+                            close(pipes[curr_command - 1][0]);
+                            close(pipes[curr_command][1]);
                         }
                     }
+                    /* execute current command */
 
-                    /* create subprocesses */
-
-                    int curr_command = -1; // identifies which child is in charge of which command
-                    pid_t pid = 1;
-                    for (int i = 0; i < command_counter; i++){
-                        if (pid != 0){ // only father can fork
-                            pid  = fork();
-                            if (pid == 0){ /* child */
-                                curr_command = i;
-                            }
-                        }
-                    }
-
-                    switch (pid){    
-                        case -1: /* error */
-                            perror("Error in fork");
-                            return -1;
-
-                        case 0: /* child process */
-                            //sleep(3); // wait for father to create pipes
-                            write(STDOUT_FILENO, "im a child\n", strlen("im a child\n"));
-                            
-                            /* REDIRECTION */
-                            // TODO: prepare errors
-                            if ((curr_command == 0) && (filev[0][0] != '0')){
-                                /* redirect from input, file[0] as stdin */
-                                close(STDIN_FILENO); // free file desc. 0
-                                int fd = open(filev[0], O_RDONLY); // fd is now 0
-                            } else if ((curr_command == command_counter - 1) && (filev[1][0] != '0')){
-                                /* redirect to output, file[1] as stdout */
-                                close(STDOUT_FILENO);
-                                int fd = open(filev[1], O_CREAT | O_RDWR, S_IRWXU);                          
-                            }
-                            if (filev[2][0] != '0'){
-                                /* redirect error, file[1] as stderr */
-                                close(STDERR_FILENO);
-                                int fd = open(filev[2], O_CREAT | O_RDWR, S_IRWXU);                          
-                            }
-
-                            /* PIPES */
-
-                            if (command_counter > 1){
-                                /* setup pipes */
-                                if (curr_command == 0){ /* first command - pipe out */
-                                    close(pipes[0][0]); // close read pipe
-                                    dup2(pipes[0][1], STDOUT_FILENO); // stdout is now pipe write
-                                    close(pipes[0][1]); // close write pipe
-                                } else if (curr_command == command_counter - 1){ /* last command - pipe in */
-                                    close(pipes[curr_command - 1][1]); // close write pipe   
-                                    dup2(pipes[curr_command - 1][0], STDIN_FILENO); // stdout is now pipe read
-                                    close(pipes[curr_command -1][0]);
-                                } else { /* intermediate command - pipe in/out */
-                                    /* setup pipes */
-                                    dup2(pipes[curr_command - 1][0], STDIN_FILENO);
-                                    dup2(pipes[curr_command][1], STDOUT_FILENO);
-                                    /* close pipes */
-                                    close(pipes[curr_command - 1][0]);
-                                    close(pipes[curr_command][1]);
-                                }
-                            }
-                            /* execute current command */
-
-                            /* INTERNAL COMMANDS */
+                    /* INTERNAL COMMANDS */
                          
-                            if (strcmp(argvv[curr_command][0],"mycp") == 0){
-                                /* execute mycpy */
-                                mycp(argvv);
-                                exit(0);
-                            } else if (strcmp(argvv[curr_command][0], "mycalc") == 0){
-                                /* execute mycalc */
-                                mycalc(argvv);
-                                exit(0);
-                            } else{
-                                /* COMMAND EXECUTION */
+                    if (strcmp(argvv[curr_command][0],"mycp") == 0){
+                        /* execute mycpy */
+                        mycp(argvv);
+                        exit(0);
+                    } else if (strcmp(argvv[curr_command][0], "mycalc") == 0){
+                        /* execute mycalc */
+                        mycalc(argvv);
+                        exit(0);
+                    } else{
+                        /* COMMAND EXECUTION */
 
-                                getCompleteCommand(argvv, curr_command);
-                                execvp(argvv[curr_command][0], argvv[curr_command]); //execute the comand
-                                exit(0);
-                            }
-                            break;
-                            
-                        default: /* parent process */
-
-                            write(STDOUT_FILENO, "im a parent\n", strlen("im a parent\n"));
-
-                            /* BACKGROUND */
-                            
-                            if (in_background != 1){
-                                while (wait(&status) != pid){ // wait for child to finish
-                                    if (status != 0){
-                                        perror("Error executing the child");
-                                    }
-                                }
-
-                                /* reset stdio */
-                                dup2(STDIN_FILENO, 0);
-                                dup2(STDOUT_FILENO, 1);
-
-                                write(STDOUT_FILENO, "children died\n", strlen("children died\n"));
-                            }
-                            break;
+                        getCompleteCommand(argvv, curr_command);
+                        execvp(argvv[curr_command][0], argvv[curr_command]); //execute the comand
+                        exit(0);
                     }
-                    /* close pipes */
-                    //close(pipes[0, MAX_COMMANDS - 1][0, 1]);
-                    for (int j = 0; j < command_counter - 1; j++){
-                        close(pipes[j][0]);
-                        close(pipes[j][1]);
-                    }
+                    exit(0);
                 }
             }
+            /* close pipes */
+            //close(pipes[0, MAX_COMMANDS - 1][0, 1]);
+            for (int j = 0; j < command_counter - 1; j++){
+                close(pipes[j][0]);
+                close(pipes[j][1]);
+            }
+        }
     }
     return 0;
 }
