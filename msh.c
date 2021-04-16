@@ -191,6 +191,12 @@ int main(int argc, char* argv[])
             if (command_counter > MAX_COMMANDS){
                 printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
             } else {
+                /* PIPES */
+                /* setup pipes */
+                int pipe0[2], pipe1[2];
+                pipe(pipe0);
+                pipe(pipe1);
+
                 /* create subprocesses */
 
                 int pid = 1;
@@ -207,13 +213,17 @@ int main(int argc, char* argv[])
                     return -1;
                 } else if (pid != 0){ /* parent process */
 
+                    /* close pipes */
+                    close(pipe0[0,1]);
+                    close(pipe1[0,1]);
+
                     /* BACKGROUND */
                            
                     if (in_background != 1){
                         while (wait(&status) != pid){ // wait for children to finish
                             if (status != 0){
-                                //perror("Error executing the child");
-                            }
+                                perror("Error executing the child");
+                            } 
                         }
                     }
                 } else { /* child process */
@@ -238,24 +248,39 @@ int main(int argc, char* argv[])
                     /* PIPES */
 
                     if (command_counter > 1){
-                        /* setup pipes */
-                        int pipe0[2], pipe1[2];
-                        pipe(pipe0);
-                        pipe(pipe1);
-                        if (curr_command == 0){ /* first command - pipe out */
-                            close(pipe0[0]); // close read pipe
-                            dup2(pipe0[1], STDOUT_FILENO); // stdout is now pipe write
-                            close(pipe0[1]); // close write pipe
-                        } else if (curr_command == command_counter - 1){ /* last command - pipe in */
-                            close(pipe0[1]); // close write pipe   
-                            dup2(pipe0[0], STDIN_FILENO); // stdin is now pipe read
+                        if (curr_command == 0){ /* first command - pipe0 out */
+                            close(pipe1[0,1]);
                             close(pipe0[0]);
-                        } else { /* intermediate command - pipe in/out */
+                            dup2(pipe0[1], STDOUT_FILENO); // stdout is now pipe write
+                            close(pipe0[1]);
+                        } else if (curr_command == command_counter - 1){ /* last command - pipe in */
+                            if ((curr_command % 2) != 0){ // odd - reads from pipe0
+                                close(pipe1[0,1]);
+                                close(pipe0[1]);
+                                dup2(pipe0[0], STDIN_FILENO); // stdin is now pipe read
+                                close(pipe0[0]);
+                            } else{ /* even - pipe1 in */
+                                close(pipe0[0,1]);
+                                close(pipe1[1]);
+                                dup2(pipe1[0], STDIN_FILENO);
+                                close(pipe1[0]);
+                            }
+                        } else if ((curr_command % 2) != 0){ /* intermediate command, odd - pipe in/out */
+                            close(pipe0[1]);
+                            close(pipe1[0]);
                             dup2(pipe0[0], STDIN_FILENO);
                             dup2(pipe1[1], STDOUT_FILENO);
-                            close(pipe0[0]);
+                        } else{ /* intermediate command, even - pipe in/out */
                             close(pipe1[1]);
+                            close(pipe0[0]);
+                            dup2(pipe1[0], STDIN_FILENO); // as it's even, we have to alternate to complete the loop
+                            close(pipe1[0]);
+                            dup2(pipe0[1], STDOUT_FILENO);
+                            close(pipe0[1]);
                         }
+                        /* close pipes *
+                        close(pipe0[0,1]);
+                        close(pipe1[0,1]);*/
                     }
                     /* execute current command */
 
