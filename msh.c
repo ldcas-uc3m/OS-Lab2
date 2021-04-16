@@ -217,13 +217,11 @@ int main(int argc, char* argv[])
                 }
                 /* create subprocesses */
 
-                int parent_pid = getpid();
-                int pid = parent_pid;
+                int pid = 1;
                 for (int i = 0; i < command_counter; i++){
-                    if (pid == parent_pid){ // only father can fork
-                        if (fork() == 0){ /* child */
+                    if (pid != 0){ // only father can fork
+                        if ((pid = fork()) == 0){ /* child */
                             curr_command = i;
-                            pid = getpid();
                         }
                     } else break;
                 }
@@ -231,7 +229,7 @@ int main(int argc, char* argv[])
                 if (pid == -1){ /* error */
                     perror("Error in fork");
                     return -1;
-                } else if (pid == parent_pid){ /* parent process */
+                } else if (pid != 0){ /* parent process */
                     write(STDOUT_FILENO, "im a parent, ", strlen("im a parent, "));
                     write(STDOUT_FILENO, "current command: ", strlen("current command: "));
                     switch(curr_command){
@@ -304,7 +302,7 @@ int main(int argc, char* argv[])
                             close(pipes[0][1]); // close write pipe
                         } else if (curr_command == command_counter - 1){ /* last command - pipe in */
                             close(pipes[curr_command - 1][1]); // close write pipe   
-                            dup2(pipes[curr_command - 1][0], STDIN_FILENO); // stdout is now pipe read
+                            dup2(pipes[curr_command - 1][0], STDIN_FILENO); // stdin is now pipe read
                             close(pipes[curr_command -1][0]);
                         } else { /* intermediate command - pipe in/out */
                             /* setup pipes */
@@ -332,6 +330,7 @@ int main(int argc, char* argv[])
 
                         getCompleteCommand(argvv, curr_command);
                         execvp(argvv[curr_command][0], argvv[curr_command]); //execute the comand
+                        perror("Error in execvp\n");
                         exit(0);
                     }
                     exit(0);
